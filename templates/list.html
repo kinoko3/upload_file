@@ -1,10 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}本子上传{% endblock %}
+
+{% block page_content %}
+<div class="container">
+    <h1>本子列表</h1>
+    <br>
+    {%for finder in file_display%}
+    <blockquote>
+    	<a href="{{ url_for('browse', filename={{FOLDER}}}}"><P>-{{finder}}</P></a>
+    </blockquote>
+    {% endfor%}
+</div>
+{% endblock %}

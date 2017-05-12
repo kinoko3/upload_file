@@ -12,6 +12,14 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+def getdirsize(dir):
+    size = 0.00
+    for root, dirs, files in os.walk(dir):
+        size += sum([os.path.getsize(os.path.join(root, name)) for name in files])
+        size = size / 1000 ** 2
+    return size
+
+
 @app.route("/upload", methods=['GET', 'POST'])
 
 def upload():
@@ -32,7 +40,7 @@ def upload():
                 size = os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # 获取文件大小
 
                 result = uploadfile(name=filename, type=mime_type, size=size)  # 调取上传文件信息类类
-                print(result.get_file())
+                print(simplejson.dumps({"files": [result.get_file()]}))
 
             return simplejson.dumps({"files": [result.get_file()]})
     if request.method == 'GET':#获取已经上传的文件在下方列出
@@ -46,12 +54,12 @@ def upload():
         file_display = []
 
         for f in files:
-            size = os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], f))#文件大小
-            file_saved = uploadfile(name=f, size=size)
-            file_display.append(file_saved.get_file())
-
-        return simplejson.dumps({"files": file_display})
-
+            file_list = os.path.splitext(f)
+            if not file_list[1] == '':
+                size = os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], f))#文件大小
+                file_saved = uploadfile(name=f, size=size)
+                file_display.append(file_saved.get_file())
+        return simplejson.dumps({"files": file_display})#获取文件列表json数据
     return redirect(url_for('index'))
 
 
@@ -71,7 +79,7 @@ def delete(filename):
         except:
             return simplejson.dumps({filename: 'False'})
 
-@app.route("/data/<string:filename>", methods=['GET'])#下载功能
+@app.route("/data/<string:filename>", methods=['GET'])#下载功能，图片是浏览功能
 def get_file(filename):
     return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER']), filename=filename)
 
@@ -79,6 +87,37 @@ def get_file(filename):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('index.html')
+
+@app.route('/list', methods=['GET'])
+def file_list():#获取已经上传的文件在下方列
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    file_display = []
+    FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'file/')
+    for f in files:
+        file_list = os.path.splitext(f)
+        if file_list[1] == '':
+            file_display.append(f)
+    return render_template('list.html', file_display=file_display, FOLDER=FOLDER)
+@app.route('/browse/<FOLDER>', methods=['GET'])
+def browse(FOLDER):
+    if request.method == 'GET':#获取已经上传的文件在下方列出
+        '''
+        files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
+
+                 os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and f not in IGNORED_FILES]
+        '''
+        files = os.listdir(FOLDER)#获取文件列表
+
+        file_display = []
+
+        for f in files:
+            file_list = os.path.splitext(f)
+            if not file_list[1] == '':
+                size = os.path.getsize(os.path.join(FOLDER, f))#文件大小
+                file_saved = uploadfile(name=f, size=size)
+                file_display.append(file_saved.get_file())
+        return simplejson.dumps({"files": file_display})#获取文件列表json数据
+    return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
