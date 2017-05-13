@@ -51,7 +51,6 @@ def upload():
                  os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and f not in IGNORED_FILES]
         '''
         files = os.listdir(app.config['UPLOAD_FOLDER'])#获取文件列表
-        print(files)
         file_display = []
 
         for f in files:
@@ -106,5 +105,5 @@ def jump(filename):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=9191)
+    app.run(debug=True, host="0.0.0.0")
 

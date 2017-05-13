@@ -7,8 +7,8 @@
     <br>
     {%for finder in file_display%}
     <blockquote>
-    	<a href="{{ url_for('browse', filename={{FOLDER}}}}"><P>-{{finder}}</P></a>
+    	<a href="{{url_for('jump', filename=finder)}}"><P>-{{finder}}</P></a>
     </blockquote>
-    {% endfor%}
+	{% endfor%}
 </div>
 {% endblock %}
