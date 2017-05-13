@@ -8,7 +8,7 @@ class uploadfile():
         self.not_allowed_msg = not_allowed_msg
         self.url = "data/%s" % name
         self.thumbnail_url = "thumbnail/%s" % name
-        self.delete_url = "delete/%s" % name #处理删除文件
+        self.delete_url = "delete/%s" % name
         self.delete_type = "DELETE"
 
 
@@ -56,7 +56,7 @@ class uploadfile():
                     "url": self.url, 
                     "thumbnailUrl": self.thumbnail_url,
                     "deleteUrl": self.delete_url, 
-                    "deleteType": self.delete_type}
+                    "deleteType": self.delete_type,}
         
         # GET normal file from disk
         else:

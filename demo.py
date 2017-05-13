@@ -6,7 +6,8 @@ app = Flask(__name__)
 Bootstrap(app)
 app.config.from_object(config)
 app.config['THUMBNAIL_FOLDER'] = 'data/thumbnail/'
-
+UPLOAD_FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'file/')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -50,7 +51,7 @@ def upload():
                  os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and f not in IGNORED_FILES]
         '''
         files = os.listdir(app.config['UPLOAD_FOLDER'])#获取文件列表
-
+        print(files)
         file_display = []
 
         for f in files:
@@ -92,33 +93,17 @@ def index():
 def file_list():#获取已经上传的文件在下方列
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     file_display = []
-    FOLDER = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'file/')
     for f in files:
         file_list = os.path.splitext(f)
         if file_list[1] == '':
             file_display.append(f)
-    return render_template('list.html', file_display=file_display, FOLDER=FOLDER)
-@app.route('/browse/<FOLDER>', methods=['GET'])
-def browse(FOLDER):
-    if request.method == 'GET':#获取已经上传的文件在下方列出
-        '''
-        files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if
-
-                 os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'], f)) and f not in IGNORED_FILES]
-        '''
-        files = os.listdir(FOLDER)#获取文件列表
-
-        file_display = []
-
-        for f in files:
-            file_list = os.path.splitext(f)
-            if not file_list[1] == '':
-                size = os.path.getsize(os.path.join(FOLDER, f))#文件大小
-                file_saved = uploadfile(name=f, size=size)
-                file_display.append(file_saved.get_file())
-        return simplejson.dumps({"files": file_display})#获取文件列表json数据
+    return render_template('list.html', file_display=file_display)
+@app.route('/list/<filename>')
+def jump(filename):
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER#重新获取路径
+    foler = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    app.config['UPLOAD_FOLDER'] = foler#重置路径
     return redirect(url_for('index'))
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=9191)
