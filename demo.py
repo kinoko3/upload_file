@@ -2,6 +2,9 @@ from flask import Flask, render_template, flash, redirect, url_for, request, sen
 from flask_bootstrap import Bootstrap
 import config, os, simplejson
 from lib.upload_file import uploadfile
+import PIL
+from PIL import Image
+import traceback
 app = Flask(__name__)
 Bootstrap(app)
 app.config.from_object(config)
@@ -19,6 +22,18 @@ def getdirsize(dir):
         size += sum([os.path.getsize(os.path.join(root, name)) for name in files])
         size = size / 1000 ** 2
     return size
+def create_thumbnail(image):
+    try:
+        base_width = 80
+        img = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], image))
+        w_percent = (base_width / float(img.size[0]))
+        h_size = int((float(img.size[1]) * float(w_percent)))
+        img = img.resize((base_width, h_size), PIL.Image.ANTIALIAS)
+        img.save(os.path.join(app.config['THUMBNAIL_FOLDER'], image))
+        return True
+    except:
+        print(traceback.format_exc())
+        return False
 
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -37,7 +52,8 @@ def upload():
             else:
 
                 files.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
+                if mime_type.startswith('image'):
+                    create_thumbnail(filename)
                 size = os.path.getsize(os.path.join(app.config['UPLOAD_FOLDER'], filename))  # 获取文件大小
 
                 result = uploadfile(name=filename, type=mime_type, size=size)  # 调取上传文件信息类类
@@ -86,24 +102,26 @@ def get_file(filename):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    dir = app.config['UPLOAD_FOLDER']
+    return render_template('index.html', dir=dir)
 
 @app.route('/list', methods=['GET'])
 def file_list():#获取已经上传的文件在下方列
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    dir = app.config['UPLOAD_FOLDER']
     files = os.listdir(app.config['UPLOAD_FOLDER'])
     file_display = []
     for f in files:
         file_list = os.path.splitext(f)
         if file_list[1] == '':
             file_display.append(f)
-    return render_template('list.html', file_display=file_display)
+    return render_template('list.html', file_display=file_display, dir=dir)
 @app.route('/list/<filename>')
 def jump(filename):
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER#重新获取路径
-    foler = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    foler = os.path.join(UPLOAD_FOLDER, filename)
     app.config['UPLOAD_FOLDER'] = foler#重置路径
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=True, port=9090, host="0.0.0.0")
 
